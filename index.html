@@ -310,6 +310,34 @@ document.addEventListener("change",function(e){
   if(e.target.id==="catSelect")setC(e.target.value);
 });
 function quickSearch(kw){var inp=q("#searchInput");if(inp)inp.value=kw;doSearch(kw)}
+// Live data fetch: polls data.json from same origin (GitHub Pages)
+var LIVE_DATA_URL = "data.json";
+var livePollTimer = null;
+function startLivePoll() {
+  livePollTimer = setInterval(fetchLiveData, 30000);
+  fetchLiveData();
+}
+function fetchLiveData() {
+  fetch(LIVE_DATA_URL, {cache: "no-cache"})
+    .then(function(r) { if (!r.ok) throw new Error("not available"); return r.json(); })
+    .then(function(d) {
+      if (d.topics && d.topics.length > 0) {
+        SEED_DATA = d.topics;
+        state.topics = d.topics;
+        state.dataTs = Date.now();
+        renderCurrent();
+        console.log("[LiveData] Updated: " + d.topics.length + " topics, source: " + (d.meta ? d.meta.source : "GitHub"));
+      }
+    })
+    .catch(function(e) {
+      console.log("[LiveData] Not available, using cached data");
+    });
+}
+function renderCurrent() {
+  if (state.currentTab === "home") renderHome();
+  else if (state.currentTab === "ranking") renderRanking();
+}
+
 function init(){
   var app=q("#app");if(!app)return;
   ["home","ranking","search","mine","detail"].forEach(function(name){
@@ -326,7 +354,7 @@ function init(){
   renderRanking();
   renderSearch();
 }
-document.addEventListener("DOMContentLoaded",init);
+document.addEventListener("DOMContentLoaded",function(){init();startLivePoll();});
 
 </script>
 </body>

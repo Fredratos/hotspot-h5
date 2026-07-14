@@ -7,6 +7,8 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 DEEPSEEK_KEY = os.environ.get("DEEPSEEK_KEY", "")
 PORT = int(os.environ.get("PORT", 3001))
 FETCH_INTERVAL = 45
+REPO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+GIT_PUSH_CYCLE = 3  # git push every N fetch cycles
 TZ = timezone(timedelta(hours=8))
 CATEGORIES = ["娱乐","体育","科技","财经","游戏","社会","教育","旅游","军事","国际","其他"]
 REGIONS = {
@@ -232,7 +234,64 @@ def classify(topics):
         t["regions"] = regions[:3]
     return topics
 
+def git_push_data():
+    """Write data.json and git push to GitHub."""
+    try:
+        merged = cache.get("merged", {})
+        if not merged or not merged.get("data"):
+            return
+        data_path = os.path.join(REPO_DIR, "data.json")
+        topics = merged["data"]
+        # Simplify for frontend: keep only essential fields
+        compact = []
+        for t in topics:
+            compact.append({
+                "title": t["title"],
+                "heat_score": t["heat_score"],
+                "category": t.get("category", "其他"),
+                "regions": t.get("regions", ["CN"]),
+                "primary_platform": t.get("primary_platform", "weibo"),
+                "platforms": [{"platform": p["platform"], "platform_rank": p["platform_rank"],
+                    "platform_heat": p["platform_heat"], "discussion_count": p.get("discussion_count", 0),
+                    "read_count": p.get("read_count", 0), "source_type": p.get("source_type", "real")}
+                    for p in t.get("platforms", [])[:4]]
+            })
+        payload = {
+            "topics": compact,
+            "meta": {
+                "updated_at": datetime.fromtimestamp(merged.get("ts", 0), TZ).isoformat(),
+                "total": len(compact),
+                "platform_stats": merged.get("platform_stats", {}),
+                "source": "微博热搜 + B站热门"
+            }
+        }
+        # Check if data changed significantly
+        old_text = ""
+        if os.path.exists(data_path):
+            with open(data_path, 'r') as f:
+                old_text = f.read()
+        new_text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        if old_text == new_text:
+            return  # No change, skip push
+        with open(data_path, 'w') as f:
+            f.write(new_text)
+        # Git push
+        import subprocess
+        subprocess.run(["git", "-C", REPO_DIR, "add", "data.json"], capture_output=True, timeout=10)
+        subprocess.run(["git", "-C", REPO_DIR, "commit", "-m",
+            f"Auto-update: {len(compact)} topics [{datetime.now(TZ).strftime('%H:%M')}]"],
+            capture_output=True, timeout=10)
+        result = subprocess.run(["git", "-C", REPO_DIR, "push", "origin", "main"],
+            capture_output=True, timeout=30)
+        if result.returncode == 0:
+            print(f"[GitPush] Pushed {len(compact)} topics to GitHub")
+        else:
+            print(f"[GitPush] Push result: {result.returncode} {result.stderr.decode()[:150]}")
+    except Exception as e:
+        print(f"[GitPush] Error: {e}")
+
 def fetch_loop():
+    cycle_count = 0
     while True:
         cycle_start = time.time()
         all_topics = []
@@ -268,6 +327,10 @@ def fetch_loop():
                 "platform_stats":{p:len(cache[p]["data"]) for p in ["weibo","bilibili","youtube","x","inferred"]}}
             print("[Merge] Total: {} | {}".format(len(merged),cache["merged"]["platform_stats"]))
         elapsed = time.time() - cycle_start
+        # Git push data every N cycles
+        cycle_count += 1
+        if cycle_count % GIT_PUSH_CYCLE == 0:
+            threading.Thread(target=git_push_data, daemon=True).start()
         time.sleep(max(5, FETCH_INTERVAL - elapsed))
 
 class Handler(SimpleHTTPRequestHandler):
