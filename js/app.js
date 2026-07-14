@@ -157,11 +157,13 @@ function sourceTypeLabel(type) {
 // ========== DATA FETCHING ==========
 async function fetchLiveData() {
   if (!API_BASE) {
-    // GitHub Pages mode - use embedded seed data
     return null;
   }
   try {
-    const resp = await fetch(`${API_BASE}/api/v1/hotlist`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const resp = await fetch(`${API_BASE}/api/v1/hotlist`, { signal: controller.signal });
+    clearTimeout(timeout);
     if (!resp.ok) return null;
     const data = await resp.json();
     if (data.topics && data.topics.length > 0) {
@@ -170,17 +172,18 @@ async function fetchLiveData() {
       return data;
     }
   } catch(e) {
-    console.log('[API] fetch error:', e.message);
+    console.log('[API] fetch error (will use seed data):', e.message);
   }
   return null;
 }
 
 function getTopics() {
+  // Live data from API
   if (state.topics.length > 0 && (Date.now() - state.dataTs) < 120000) {
     return state.topics;
   }
-  // Fallback to seed data when API unavailable (GitHub Pages mode)
-  if (!API_BASE && SEED_DATA.length > 0) {
+  // API unavailable (mixed content blocked or server down) - fallback to seed data
+  if (SEED_DATA.length > 0) {
     return SEED_DATA;
   }
   return [];
@@ -221,12 +224,9 @@ function renderHome() {
 
   const now = new Date().toLocaleString('zh-CN');
   const isLive = state.topics.length > 0 && state.dataTs > 0;
-  const usingSeed = !API_BASE && SEED_DATA.length > 0;
   const dataStatus = isLive
     ? `<span style="color:var(--success)">● 实时数据 (${state.topics.length}条)</span>`
-    : usingSeed
-      ? '<span style="color:var(--info)">◉ 演示数据 (部署后端获取实时数据)</span>'
-      : '<span style="color:var(--warning)">○ 加载中...</span>';
+    : `<span style="color:var(--info)">◉ 演示数据 (部署后端获得实时更新)</span>`;
 
   container.innerHTML = `
     <div class="update-bar">${dataStatus}<span style="margin-left:auto">${now}</span></div>
@@ -663,6 +663,12 @@ function init() {
   const app = $('#app');
   if (!app) return;
 
+  // ** PRELOAD seed data immediately so first render has content **
+  if (!state.topics.length && typeof SEED_DATA !== 'undefined' && SEED_DATA.length > 0) {
+    state.topics = SEED_DATA;
+    state.dataTs = 1; // mark as seed data (not real live)
+  }
+
   // Create all screens
   ['home', 'ranking', 'search', 'mine', 'detail'].forEach(name => {
     const screen = document.createElement('div');
@@ -676,14 +682,15 @@ function init() {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  // Initial render
+  // Initial render — seed data already loaded into state.topics
   renderHome();
   renderRanking();
   renderSearch();
 
-  // Start periodic refresh
+  // Try live API in background — if successful, replace seed data
   fetchLiveData().then(data => {
     if (data && state.currentTab === 'home') renderHome();
+    if (data && state.currentTab === 'ranking') renderRanking();
   });
 
   // Periodic refresh every  mins
