@@ -24,11 +24,81 @@ const REGION_CONFIG = {
 };
 
 // API endpoint - auto-detect
-const API_BASE = (() => {
-  const host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3001';
-  return ''; // same-origin in production
-})();
+const API_BASE = 'http://1.95.104.85:3001';
+
+// ========== BUILT-IN SEED DATA (used when API unavailable) ==========
+const SEED_DATA = [
+  {title:'2026世界杯亚洲区预选赛中国vs日本',category:'体育',heat_score:9.8,regions:['CN'],first_seen_at:new Date().toISOString(),
+    platforms:[{platform:'weibo',platform_rank:1,platform_heat:9.9,discussion_count:520000,interaction_count:1300000,read_count:8900000,source_type:'real'},
+      {platform:'x',platform_rank:2,platform_heat:8.5,discussion_count:230000,interaction_count:340000,read_count:4500000,source_type:'real'},
+      {platform:'youtube',platform_rank:3,platform_heat:7.8,discussion_count:89000,interaction_count:120000,read_count:2100000,source_type:'real'}]},
+  {title:'iPhone 18 Pro真机曝光：全新钛金属设计',category:'科技',heat_score:9.5,regions:['CN','US','EU'],first_seen_at:new Date(Date.now()-3600000).toISOString(),
+    platforms:[{platform:'weibo',platform_rank:2,platform_heat:9.2,discussion_count:280000,interaction_count:720000,read_count:5600000,source_type:'real'},
+      {platform:'x',platform_rank:1,platform_heat:9.8,discussion_count:450000,interaction_count:1100000,read_count:8900000,source_type:'real'},
+      {platform:'youtube',platform_rank:3,platform_heat:8.4,discussion_count:120000,interaction_count:280000,read_count:2300000,source_type:'real'},
+      {platform:'instagram',platform_rank:2,platform_heat:8.9,discussion_count:180000,interaction_count:560000,read_count:3400000,source_type:'inferred'}]},
+  {title:'Taylor Swift Eras Tour Finale Breaks Attendance Record',category:'娱乐',heat_score:9.9,regions:['US','EU','BR'],first_seen_at:new Date(Date.now()-7200000).toISOString(),
+    platforms:[{platform:'x',platform_rank:1,platform_heat:9.9,discussion_count:890000,interaction_count:2100000,read_count:15000000,source_type:'real'},
+      {platform:'instagram',platform_rank:1,platform_heat:9.8,discussion_count:670000,interaction_count:1800000,read_count:12000000,source_type:'inferred'},
+      {platform:'tiktok',platform_rank:1,platform_heat:9.7,discussion_count:540000,interaction_count:1500000,read_count:9800000,source_type:'inferred'},
+      {platform:'youtube',platform_rank:2,platform_heat:9.0,discussion_count:340000,interaction_count:890000,read_count:6700000,source_type:'real'}]},
+  {title:'全球AI监管峰会达成里程碑协议',category:'科技',heat_score:9.3,regions:['US','EU','CN'],first_seen_at:new Date(Date.now()-10800000).toISOString(),
+    platforms:[{platform:'x',platform_rank:2,platform_heat:9.2,discussion_count:180000,interaction_count:420000,read_count:3400000,source_type:'real'},
+      {platform:'facebook',platform_rank:3,platform_heat:8.7,discussion_count:120000,interaction_count:280000,read_count:2100000,source_type:'inferred'},
+      {platform:'youtube',platform_rank:5,platform_heat:8.0,discussion_count:67000,interaction_count:98000,read_count:1200000,source_type:'real'}]},
+  {title:'黑神话悟空2首支实机演示发布',category:'游戏',heat_score:9.9,regions:['CN','US','EU'],first_seen_at:new Date(Date.now()-14400000).toISOString(),
+    platforms:[{platform:'bilibili',platform_rank:1,platform_heat:9.9,discussion_count:890000,interaction_count:2100000,read_count:12000000,source_type:'real'},
+      {platform:'weibo',platform_rank:1,platform_heat:9.8,discussion_count:670000,interaction_count:1600000,read_count:9800000,source_type:'real'},
+      {platform:'youtube',platform_rank:4,platform_heat:7.9,discussion_count:110000,interaction_count:280000,read_count:2100000,source_type:'real'},
+      {platform:'x',platform_rank:5,platform_heat:7.5,discussion_count:78000,interaction_count:150000,read_count:1200000,source_type:'real'}]},
+  {title:'泰国泼水节音乐节吸引全球游客超百万',category:'旅游',heat_score:9.8,regions:['TH'],first_seen_at:new Date(Date.now()-18000000).toISOString(),
+    platforms:[{platform:'tiktok',platform_rank:1,platform_heat:9.8,discussion_count:340000,interaction_count:890000,read_count:5600000,source_type:'inferred'},
+      {platform:'instagram',platform_rank:2,platform_heat:9.3,discussion_count:210000,interaction_count:560000,read_count:3400000,source_type:'inferred'},
+      {platform:'facebook',platform_rank:1,platform_heat:9.5,discussion_count:180000,interaction_count:450000,read_count:2800000,source_type:'inferred'}]},
+  {title:'沙特NEOM未来城市一期竣工开放',category:'财经',heat_score:9.6,regions:['SA','US'],first_seen_at:new Date(Date.now()-21600000).toISOString(),
+    platforms:[{platform:'x',platform_rank:1,platform_heat:9.6,discussion_count:280000,interaction_count:670000,read_count:4500000,source_type:'real'},
+      {platform:'instagram',platform_rank:3,platform_heat:8.3,discussion_count:89000,interaction_count:210000,read_count:1800000,source_type:'inferred'}]},
+  {title:'巴西里约狂欢节创史上最大规模',category:'娱乐',heat_score:9.7,regions:['BR'],first_seen_at:new Date(Date.now()-25200000).toISOString(),
+    platforms:[{platform:'instagram',platform_rank:1,platform_heat:9.7,discussion_count:560000,interaction_count:1300000,read_count:8900000,source_type:'inferred'},
+      {platform:'tiktok',platform_rank:1,platform_heat:9.5,discussion_count:450000,interaction_count:1100000,read_count:7800000,source_type:'inferred'},
+      {platform:'facebook',platform_rank:1,platform_heat:9.3,discussion_count:230000,interaction_count:560000,read_count:3400000,source_type:'inferred'}]},
+  {title:'香港Web3金融科技周盛大开幕',category:'财经',heat_score:9.2,regions:['HK'],first_seen_at:new Date(Date.now()-28800000).toISOString(),
+    platforms:[{platform:'x',platform_rank:2,platform_heat:8.5,discussion_count:45000,interaction_count:120000,read_count:890000,source_type:'real'},
+      {platform:'facebook',platform_rank:3,platform_heat:8.2,discussion_count:34000,interaction_count:89000,read_count:560000,source_type:'inferred'}]},
+  {title:'2026欧冠决赛皇马vs曼城巅峰对决',category:'体育',heat_score:9.7,regions:['EU','BR','US'],first_seen_at:new Date(Date.now()-32400000).toISOString(),
+    platforms:[{platform:'x',platform_rank:1,platform_heat:9.7,discussion_count:670000,interaction_count:1800000,read_count:12000000,source_type:'real'},
+      {platform:'instagram',platform_rank:2,platform_heat:9.4,discussion_count:450000,interaction_count:1200000,read_count:7800000,source_type:'inferred'},
+      {platform:'facebook',platform_rank:2,platform_heat:8.9,discussion_count:280000,interaction_count:670000,read_count:4500000,source_type:'inferred'},
+      {platform:'youtube',platform_rank:3,platform_heat:8.2,discussion_count:210000,interaction_count:450000,read_count:3400000,source_type:'real'}]},
+  {title:'日本樱花季提前开放吸引全球游客',category:'旅游',heat_score:9.1,regions:['JP'],first_seen_at:new Date(Date.now()-36000000).toISOString(),
+    platforms:[{platform:'x',platform_rank:1,platform_heat:9.1,discussion_count:120000,interaction_count:280000,read_count:2100000,source_type:'real'},
+      {platform:'instagram',platform_rank:4,platform_heat:8.6,discussion_count:89000,interaction_count:240000,read_count:1800000,source_type:'inferred'},
+      {platform:'tiktok',platform_rank:5,platform_heat:8.0,discussion_count:67000,interaction_count:180000,read_count:1200000,source_type:'inferred'}]},
+  {title:'韩国K-Pop全球音乐节仁川盛大举行',category:'娱乐',heat_score:9.4,regions:['KR','JP','TH'],first_seen_at:new Date(Date.now()-39600000).toISOString(),
+    platforms:[{platform:'x',platform_rank:2,platform_heat:9.4,discussion_count:340000,interaction_count:890000,read_count:5600000,source_type:'real'},
+      {platform:'youtube',platform_rank:1,platform_heat:9.6,discussion_count:280000,interaction_count:720000,read_count:4500000,source_type:'real'},
+      {platform:'instagram',platform_rank:1,platform_heat:9.3,discussion_count:450000,interaction_count:1100000,read_count:7800000,source_type:'inferred'},
+      {platform:'tiktok',platform_rank:2,platform_heat:9.1,discussion_count:380000,interaction_count:980000,read_count:6700000,source_type:'inferred'}]},
+  {title:'印度登月任务Chandrayaan-4成功着陆',category:'科技',heat_score:9.6,regions:['IN','US','EU'],first_seen_at:new Date(Date.now()-43200000).toISOString(),
+    platforms:[{platform:'x',platform_rank:1,platform_heat:9.6,discussion_count:450000,interaction_count:1200000,read_count:8900000,source_type:'real'},
+      {platform:'facebook',platform_rank:3,platform_heat:8.4,discussion_count:120000,interaction_count:340000,read_count:2300000,source_type:'inferred'},
+      {platform:'youtube',platform_rank:2,platform_heat:8.8,discussion_count:180000,interaction_count:450000,read_count:3400000,source_type:'real'}]},
+  {title:'英国皇室婚礼全球直播创纪录',category:'娱乐',heat_score:9.3,regions:['GB','EU','US'],first_seen_at:new Date(Date.now()-46800000).toISOString(),
+    platforms:[{platform:'x',platform_rank:1,platform_heat:9.3,discussion_count:560000,interaction_count:1400000,read_count:9800000,source_type:'real'},
+      {platform:'instagram',platform_rank:2,platform_heat:9.1,discussion_count:450000,interaction_count:1100000,read_count:7800000,source_type:'inferred'},
+      {platform:'facebook',platform_rank:1,platform_heat:8.9,discussion_count:230000,interaction_count:670000,read_count:4500000,source_type:'inferred'}]},
+  {title:'俄罗斯胜利日阅兵展示新一代武器装备',category:'军事',heat_score:9.0,regions:['RU','CN'],first_seen_at:new Date(Date.now()-50400000).toISOString(),
+    platforms:[{platform:'x',platform_rank:2,platform_heat:8.7,discussion_count:120000,interaction_count:280000,read_count:2100000,source_type:'real'},
+      {platform:'youtube',platform_rank:3,platform_heat:8.2,discussion_count:89000,interaction_count:210000,read_count:1800000,source_type:'real'}]},
+];
+
+// Add primary_platform to seed data
+SEED_DATA.forEach(t => {
+  if (!t.primary_platform && t.platforms.length > 0) {
+    const best = [...t.platforms].sort((a,b) => b.platform_heat - a.platform_heat)[0];
+    t.primary_platform = best.platform;
+  }
+});
 
 // State
 const state = {
@@ -109,7 +179,11 @@ function getTopics() {
   if (state.topics.length > 0 && (Date.now() - state.dataTs) < 120000) {
     return state.topics;
   }
-  return []; // empty if no live data
+  // Fallback to seed data when API unavailable (GitHub Pages mode)
+  if (!API_BASE && SEED_DATA.length > 0) {
+    return SEED_DATA;
+  }
+  return [];
 }
 
 async function refreshLiveData() {
@@ -146,9 +220,13 @@ function renderHome() {
   });
 
   const now = new Date().toLocaleString('zh-CN');
-  const dataStatus = state.topics.length > 0
+  const isLive = state.topics.length > 0 && state.dataTs > 0;
+  const usingSeed = !API_BASE && SEED_DATA.length > 0;
+  const dataStatus = isLive
     ? `<span style="color:var(--success)">● 实时数据 (${state.topics.length}条)</span>`
-    : '<span style="color:var(--warning)">○ 离线模式 (使用缓存数据)</span>';
+    : usingSeed
+      ? '<span style="color:var(--info)">◉ 演示数据 (部署后端获取实时数据)</span>'
+      : '<span style="color:var(--warning)">○ 加载中...</span>';
 
   container.innerHTML = `
     <div class="update-bar">${dataStatus}<span style="margin-left:auto">${now}</span></div>
