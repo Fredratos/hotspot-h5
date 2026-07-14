@@ -4,7 +4,7 @@ import json, time, threading, urllib.request, re, os, html as html_mod
 from datetime import datetime, timezone, timedelta
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 
-DEEPSEEK_KEY = os.environ.get("DEEPSEEK_KEY", os.environ.get("DEEPSEEK_KEY", ""))
+DEEPSEEK_KEY = os.environ.get("DEEPSEEK_KEY", "")
 PORT = int(os.environ.get("PORT", 3001))
 FETCH_INTERVAL = 45
 TZ = timezone(timedelta(hours=8))
